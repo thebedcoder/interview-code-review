@@ -9,7 +9,7 @@ import 'package:sqflite/sqflite.dart';
 class AppDatabase {
   AppDatabase({this.databaseName = 'fieldops.db'});
 
-  static const int schemaVersion = 1;
+  static const int schemaVersion = 2;
 
   final String databaseName;
 
@@ -43,10 +43,25 @@ class AppDatabase {
       )
     ''');
     await db.execute('CREATE INDEX jobs_scheduled_at ON jobs (scheduled_at)');
+    await db.execute('''
+      CREATE TABLE sync_operations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        kind TEXT NOT NULL,
+        job_id TEXT NOT NULL,
+        payload TEXT NOT NULL,
+        attempts INTEGER NOT NULL DEFAULT 0,
+        status TEXT NOT NULL,
+        created_at INTEGER NOT NULL
+      )
+    ''');
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    // No migrations yet - v1 is the first shipped schema.
+    // v2 adds the sync_operations queue. Recreating the schema is the simplest
+    // way to pick it up - jobs are re-fetched from the API on next launch.
+    await db.execute('DROP TABLE IF EXISTS jobs');
+    await db.execute('DROP INDEX IF EXISTS jobs_scheduled_at');
+    await _onCreate(db, newVersion);
   }
 
   Future<void> close() async {
