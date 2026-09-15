@@ -48,6 +48,20 @@ class JobModel {
   final int scheduledAt;
   final int updatedAt;
 
+  /// Marks this job complete locally, ahead of the queued upload.
+  JobModel completedWith(String notes) {
+    return JobModel(
+      id: id,
+      title: title,
+      customerName: customerName,
+      address: address,
+      status: 'completed',
+      notes: notes,
+      scheduledAt: scheduledAt,
+      updatedAt: DateTime.now().millisecondsSinceEpoch,
+    );
+  }
+
   Map<String, Object?> toRow() {
     return <String, Object?>{
       'id': id,
