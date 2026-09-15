@@ -40,10 +40,24 @@ class SessionsRemoteDataSource {
 
   /// Ends the session. The server prices it from its own clock and the bay's
   /// tariff; the client does not send an amount.
-  Future<ParkingSessionModel> stop({required String sessionId}) async {
+  Future<ParkingSessionModel> stop({
+    required String sessionId,
+    required DateTime startedAt,
+    required int tariffPencePerMinute,
+  }) async {
+    // Showing the driver a running total meant the app already knew the price,
+    // and sending it avoids a second round trip for the receipt screen.
+    final int minutes = DateTime.now().difference(startedAt).inMinutes;
+    final int amountPence = minutes * tariffPencePerMinute;
     try {
       final Response<Map<String, dynamic>> response = await _apiClient
-          .post<Map<String, dynamic>>('/sessions/$sessionId/stop');
+          .post<Map<String, dynamic>>(
+            '/sessions/$sessionId/stop',
+            data: <String, Object?>{
+              'amount_pence': amountPence,
+              'minutes': minutes,
+            },
+          );
       return ParkingSessionModel.fromJson(response.data!);
     } on DioException catch (error) {
       throw NetworkException('Could not stop parking: ${error.message}');

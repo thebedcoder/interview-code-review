@@ -6,6 +6,8 @@ class StopParkingUseCase {
 
   final SessionsRepository _repository;
 
-  Future<ParkingSession> call({required String sessionId}) =>
-      _repository.stop(sessionId: sessionId);
+  Future<ParkingSession> call({
+    required String sessionId,
+    required DateTime startedAt,
+  }) => _repository.stop(sessionId: sessionId, startedAt: startedAt);
 }

@@ -10,5 +10,9 @@ abstract class AuthRepository {
 
   Future<AuthSession> refresh();
 
+  /// True when the signed-in account holds a resident permit, which unlocks
+  /// the discounted tariff.
+  Future<bool> hasResidentPermit();
+
   Future<void> signOut();
 }
