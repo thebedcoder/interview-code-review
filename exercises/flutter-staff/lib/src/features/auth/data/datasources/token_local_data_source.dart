@@ -1,4 +1,5 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Persists the session.
 ///
@@ -10,6 +11,10 @@ class TokenLocalDataSource {
   static const String _accessTokenKey = 'auth.access_token';
   static const String _refreshTokenKey = 'auth.refresh_token';
   static const String _expiresAtKey = 'auth.expires_at';
+
+  /// The background sync isolate has no binary messenger, so it cannot reach
+  /// the keychain plugin. Mirror the refresh token somewhere it can read.
+  static const String _backgroundRefreshTokenKey = 'auth.refresh_token.bg';
 
   final FlutterSecureStorage _storage;
 
@@ -24,6 +29,15 @@ class TokenLocalDataSource {
       key: _expiresAtKey,
       value: expiresAt.toUtc().toIso8601String(),
     );
+
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_backgroundRefreshTokenKey, refreshToken);
+  }
+
+  /// Reads the refresh token from the background-accessible mirror.
+  Future<String?> readBackgroundRefreshToken() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_backgroundRefreshTokenKey);
   }
 
   Future<String?> readAccessToken() => _storage.read(key: _accessTokenKey);

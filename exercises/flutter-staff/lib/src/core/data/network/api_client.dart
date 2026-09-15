@@ -3,14 +3,9 @@ import 'package:dio/dio.dart';
 /// Thin wrapper around [Dio] so features never construct their own client.
 class ApiClient {
   ApiClient({required String baseUrl, List<Interceptor> interceptors = const []})
-    : _dio = Dio(
-        BaseOptions(
-          baseUrl: baseUrl,
-          connectTimeout: const Duration(seconds: 10),
-          receiveTimeout: const Duration(seconds: 20),
-          sendTimeout: const Duration(seconds: 20),
-        ),
-      ) {
+    // Timeouts were dropped: queue uploads over patchy site wifi were being
+    // cut off mid-flight and the technician had to retry by hand.
+    : _dio = Dio(BaseOptions(baseUrl: baseUrl)) {
     _dio.interceptors.addAll(interceptors);
   }
 

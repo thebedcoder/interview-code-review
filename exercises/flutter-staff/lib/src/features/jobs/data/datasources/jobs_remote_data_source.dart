@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:fieldops/src/core/data/network/api_client.dart';
 import 'package:fieldops/src/core/domain/exceptions/app_exception.dart';
@@ -8,11 +10,16 @@ class JobsRemoteDataSource {
 
   final ApiClient _apiClient;
 
+  /// Pulls the technician's full job history so the app has something to show
+  /// while offline. Returns the whole snapshot, not just today's work.
   Future<List<JobModel>> fetchJobs() async {
     try {
-      final Response<List<dynamic>> response = await _apiClient
-          .get<List<dynamic>>('/jobs');
-      return response.data!
+      final Response<String> response = await _apiClient.get<String>(
+        '/jobs',
+        queryParameters: <String, dynamic>{'snapshot': true},
+      );
+      final List<dynamic> decoded = jsonDecode(response.data!) as List<dynamic>;
+      return decoded
           .map((dynamic e) => JobModel.fromJson(e as Map<String, dynamic>))
           .toList();
     } on DioException catch (error) {

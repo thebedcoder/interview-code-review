@@ -8,6 +8,7 @@ import 'package:fieldops/src/features/jobs/domain/repositories/jobs_repository.d
 import 'package:fieldops/src/features/jobs/domain/usecases/complete_job_usecase.dart';
 import 'package:fieldops/src/features/jobs/domain/usecases/get_jobs_usecase.dart';
 import 'package:fieldops/src/features/jobs/presentation/bloc/jobs_bloc.dart';
+import 'package:fieldops/src/features/sync/domain/repositories/sync_repository.dart';
 import 'package:get_it/get_it.dart';
 
 class JobsDIInitializer extends DIInitializer {
@@ -19,6 +20,7 @@ class JobsDIInitializer extends DIInitializer {
       () => JobsRepositoryImpl(
         remoteDataSource: JobsRemoteDataSource(registrar<ApiClient>()),
         localDataSource: JobsLocalDataSource(registrar<AppDatabase>()),
+        syncRepository: registrar<SyncRepository>(),
       ),
     );
     registrar.registerFactory<JobsBloc>(
