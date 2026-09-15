@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kerb/src/core/data/deeplinks/deep_link_service.dart';
 import 'package:kerb/src/core/di/di_initializer.dart';
 import 'package:kerb/src/core/di/service_locator.dart';
 import 'package:kerb/src/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:kerb/src/features/auth/presentation/pages/sign_in_page.dart';
+import 'package:kerb/src/features/payments/presentation/pages/wallet_page.dart';
 import 'package:kerb/src/features/sessions/presentation/pages/home_page.dart';
 
 Future<void> main() async {
@@ -21,6 +23,10 @@ class KerbApp extends StatelessWidget {
       create: (_) => serviceLocator<AuthBloc>()..add(const AuthStarted()),
       child: MaterialApp(
         title: 'Kerb',
+        navigatorKey: navigatorKey,
+        routes: <String, WidgetBuilder>{
+          '/wallet': (_) => const WalletPage(),
+        },
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         ),

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -5,6 +7,7 @@ import 'package:kerb/src/core/di/service_locator.dart';
 import 'package:kerb/src/core/domain/exceptions/app_exception.dart';
 import 'package:kerb/src/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:kerb/src/features/sessions/domain/entities/parking_session.dart';
+import 'package:kerb/src/features/payments/presentation/pages/wallet_page.dart';
 import 'package:kerb/src/features/sessions/presentation/bloc/parking_bloc.dart';
 
 class HomePage extends StatelessWidget {
@@ -29,6 +32,12 @@ class _HomeView extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Kerb'),
         actions: <Widget>[
+          IconButton(
+            icon: const Icon(Icons.credit_card),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(builder: (_) => const WalletPage()),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () =>
@@ -82,19 +91,55 @@ class _IdleView extends StatelessWidget {
   }
 }
 
-class _ActiveView extends StatelessWidget {
+class _ActiveView extends StatefulWidget {
   const _ActiveView({required this.session});
 
   final ParkingSession session;
 
   @override
+  State<_ActiveView> createState() => _ActiveViewState();
+}
+
+class _ActiveViewState extends State<_ActiveView> {
+  static const int _tariffPencePerMinute = 5;
+
+  late Timer _ticker;
+  Duration _elapsed = Duration.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+      setState(() {
+        _elapsed = DateTime.now().difference(widget.session.startedAt);
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _ticker.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final NumberFormat money = NumberFormat.currency(
+      locale: 'en_GB',
+      symbol: '£',
+    );
+    final ParkingSession session = widget.session;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           Text('Parked in bay ${session.bayCode}'),
           Text('Since ${DateFormat.jm().format(session.startedAt)}'),
+          Text('${_elapsed.inMinutes} min'),
+          Text(
+            'Running total '
+            '${money.format(_elapsed.inMinutes * _tariffPencePerMinute / 100)}',
+          ),
           const SizedBox(height: 12),
           FilledButton(
             onPressed: () =>

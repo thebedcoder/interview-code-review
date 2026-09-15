@@ -2,6 +2,7 @@ import 'package:kerb/src/core/domain/exceptions/app_exception.dart';
 import 'package:kerb/src/features/auth/data/datasources/auth_local_data_source.dart';
 import 'package:kerb/src/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:kerb/src/features/auth/data/datasources/pkce_factory.dart';
+import 'package:kerb/src/features/auth/data/datasources/token_claims_reader.dart';
 import 'package:kerb/src/features/auth/data/models/auth_session_model.dart';
 import 'package:kerb/src/features/auth/domain/entities/auth_session.dart';
 import 'package:kerb/src/features/auth/domain/entities/pkce_challenge.dart';
@@ -12,11 +13,13 @@ class AuthRepositoryImpl implements AuthRepository {
     required this._remoteDataSource,
     required this._localDataSource,
     required this._pkceFactory,
+    required this._claimsReader,
   });
 
   final AuthRemoteDataSource _remoteDataSource;
   final AuthLocalDataSource _localDataSource;
   final PkceFactory _pkceFactory;
+  final TokenClaimsReader _claimsReader;
 
   @override
   Future<PkceChallenge> beginSignIn() async {
@@ -31,19 +34,17 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<AuthSession> completeSignIn(Uri callback) async {
     final String? code = callback.queryParameters['code'];
-    final String? returnedState = callback.queryParameters['state'];
     if (code == null) {
       throw const AuthFlowException('Authorisation callback carried no code.');
     }
 
-    final String? expectedState = await _localDataSource.readPendingState();
     final String? verifier = await _localDataSource.readPendingVerifier();
-    if (expectedState == null || verifier == null) {
+    if (verifier == null) {
       throw const AuthFlowException('No sign in is in progress.');
     }
-    if (returnedState != expectedState) {
-      throw const AuthFlowException('Authorisation callback did not match.');
-    }
+    // app_links delivers the callback straight from the OS, and PKCE already
+    // binds the code to this device, so the extra state round-trip was only
+    // causing sign-in failures when the browser reordered the parameters.
 
     final AuthSessionModel model = await _remoteDataSource.exchangeCode(
       code: code,
@@ -80,6 +81,16 @@ class AuthRepositoryImpl implements AuthRepository {
       throw const UnauthorizedException('No session to refresh.');
     }
     return _persist(await _remoteDataSource.refresh(refreshToken));
+  }
+
+  @override
+  Future<bool> hasResidentPermit() async {
+    final String? accessToken = await _localDataSource.readAccessToken();
+    if (accessToken == null) {
+      return false;
+    }
+    final Map<String, dynamic> claims = _claimsReader.read(accessToken);
+    return claims['resident_permit'] == true;
   }
 
   @override

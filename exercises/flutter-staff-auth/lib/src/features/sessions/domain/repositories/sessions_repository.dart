@@ -5,5 +5,8 @@ abstract class SessionsRepository {
 
   Future<ParkingSession> start({required String bayCode});
 
-  Future<ParkingSession> stop({required String sessionId});
+  Future<ParkingSession> stop({
+    required String sessionId,
+    required DateTime startedAt,
+  });
 }

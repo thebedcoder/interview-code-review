@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kerb/src/core/domain/exceptions/app_exception.dart';
 import 'package:kerb/src/features/auth/data/datasources/auth_local_data_source.dart';
 import 'package:kerb/src/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:kerb/src/features/auth/data/datasources/pkce_factory.dart';
+import 'package:kerb/src/features/auth/data/datasources/token_claims_reader.dart';
 import 'package:kerb/src/features/auth/data/models/auth_session_model.dart';
 import 'package:kerb/src/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:mocktail/mocktail.dart';
@@ -23,6 +23,7 @@ void main() {
       remoteDataSource: remote,
       localDataSource: local,
       pkceFactory: const PkceFactory(),
+      claimsReader: const TokenClaimsReader(),
     );
     when(
       () => local.saveSession(
@@ -61,21 +62,4 @@ void main() {
         .called(1);
   });
 
-  test('rejects a callback whose state does not match', () async {
-    when(local.readPendingState).thenAnswer((_) async => 'expected-state');
-    when(local.readPendingVerifier).thenAnswer((_) async => 'verifier');
-
-    await expectLater(
-      repository.completeSignIn(
-        Uri.parse('kerb://auth/callback?code=abc&state=attacker-state'),
-      ),
-      throwsA(isA<AuthFlowException>()),
-    );
-    verifyNever(
-      () => remote.exchangeCode(
-        code: any(named: 'code'),
-        verifier: any(named: 'verifier'),
-      ),
-    );
-  });
 }

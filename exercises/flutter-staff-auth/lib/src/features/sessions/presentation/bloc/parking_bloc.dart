@@ -68,6 +68,7 @@ class ParkingBloc extends Bloc<ParkingEvent, ParkingState> {
     try {
       final ParkingSession session = await _stopParkingUseCase.call(
         sessionId: current.session.id,
+        startedAt: current.session.startedAt,
       );
       emit(ParkingFinished(session: session));
     } on AppException catch (error) {
