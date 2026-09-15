@@ -8,6 +8,7 @@ class Listing extends Equatable {
     required this.pricePence,
     required this.bedrooms,
     required this.imageUrl,
+    required this.epcRating,
     required this.addedAt,
   });
 
@@ -17,6 +18,7 @@ class Listing extends Equatable {
   final int pricePence;
   final int bedrooms;
   final String imageUrl;
+  final String epcRating;
   final DateTime addedAt;
 
   @override
@@ -27,6 +29,7 @@ class Listing extends Equatable {
     pricePence,
     bedrooms,
     imageUrl,
+    epcRating,
     addedAt,
   ];
 }

@@ -20,14 +20,38 @@ class ListingsLoaded extends ListingsState {
     required this.listings,
     required this.favouriteIds,
     required this.hasMore,
+    required this.query,
+    required this.filters,
+    required this.isLoadingMore,
   });
 
   final List<Listing> listings;
   final Set<String> favouriteIds;
   final bool hasMore;
+  final String query;
+  final ListingFilters filters;
+  final bool isLoadingMore;
+
+  ListingsLoaded copyWith({Set<String>? favouriteIds, bool? isLoadingMore}) {
+    return ListingsLoaded(
+      listings: listings,
+      favouriteIds: favouriteIds ?? this.favouriteIds,
+      hasMore: hasMore,
+      query: query,
+      filters: filters,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+    );
+  }
 
   @override
-  List<Object?> get props => <Object?>[listings, favouriteIds, hasMore];
+  List<Object?> get props => <Object?>[
+    listings,
+    favouriteIds,
+    hasMore,
+    query,
+    filters,
+    isLoadingMore,
+  ];
 }
 
 class ListingsFailure extends ListingsState {

@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:habitat/src/core/data/network/api_client.dart';
 import 'package:habitat/src/core/domain/exceptions/app_exception.dart';
 import 'package:habitat/src/features/listings/data/models/listing_model.dart';
+import 'package:habitat/src/features/listings/domain/entities/listing_filters.dart';
 
 class ListingsRemoteDataSource {
   const ListingsRemoteDataSource(this._apiClient);
@@ -13,6 +14,7 @@ class ListingsRemoteDataSource {
   Future<List<ListingModel>> search({
     required String query,
     required int page,
+    required ListingFilters filters,
   }) async {
     try {
       final Response<Map<String, dynamic>> response = await _apiClient
@@ -22,6 +24,7 @@ class ListingsRemoteDataSource {
               'q': query,
               'page': page,
               'per_page': pageSize,
+              ...filters.toQueryParameters(),
             },
           );
       final List<dynamic> items = response.data!['items'] as List<dynamic>;
@@ -30,8 +33,6 @@ class ListingsRemoteDataSource {
           .toList();
     } on DioException catch (error) {
       throw NetworkException('Could not load listings: ${error.message}');
-    } on TypeError catch (error) {
-      throw ParsingException('Unexpected listing payload: $error');
     }
   }
 }
