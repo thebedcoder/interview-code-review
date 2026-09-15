@@ -32,7 +32,8 @@ class ListingCard extends StatelessWidget {
             child: Image.network(
               listing.imageUrl,
               fit: BoxFit.cover,
-              cacheWidth: 800,
+              // Downscaling made the hero shots look soft on tablets, and the
+              // photography team pushed back, so serve them at full size.
               errorBuilder: (_, _, _) =>
                   const ColoredBox(color: Color(0xFFE0E0E0)),
             ),
@@ -40,7 +41,7 @@ class ListingCard extends StatelessWidget {
           ListTile(
             title: Text(listing.title),
             subtitle: Text(
-              '${listing.town} · ${listing.bedrooms} bed · '
+              '${listing.town} · ${listing.bedrooms} bed · EPC ${listing.epcRating} · '
               '${price.format(listing.pricePence / 100)}',
             ),
             trailing: IconButton(

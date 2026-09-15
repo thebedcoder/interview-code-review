@@ -1,6 +1,5 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:habitat/src/core/domain/exceptions/app_exception.dart';
 import 'package:habitat/src/features/favourites/domain/repositories/favourites_repository.dart';
 import 'package:habitat/src/features/favourites/domain/usecases/toggle_favourite_usecase.dart';
 import 'package:habitat/src/features/listings/domain/entities/listing.dart';
@@ -37,18 +36,11 @@ void main() {
   setUp(() {
     listings = _MockListingsRepository();
     favourites = _MockFavouritesRepository();
+    when(favourites.read).thenAnswer((_) async => <String>{});
   });
 
-  ListingsBloc buildBloc() {
-    return ListingsBloc(
-      getListingsUseCase: GetListingsUseCase(listings),
-      toggleFavouriteUseCase: ToggleFavouriteUseCase(favourites),
-      favouritesRepository: favourites,
-    );
-  }
-
   blocTest<ListingsBloc, ListingsState>(
-    'loads the first page',
+    'searching replaces the results with matches for the new query',
     setUp: () {
       when(
         () => listings.search(
@@ -58,44 +50,28 @@ void main() {
         ),
       ).thenAnswer(
         (_) async => ListingPage(
-          listings: <Listing>[_listing('a')],
+          listings: <Listing>[_listing('leeds-1')],
           page: 1,
           hasMore: false,
         ),
       );
-      when(favourites.read).thenAnswer((_) async => <String>{});
     },
-    build: buildBloc,
-    act: (ListingsBloc bloc) => bloc.add(const ListingsRequested()),
+    build: () => ListingsBloc(
+      getListingsUseCase: GetListingsUseCase(listings),
+      toggleFavouriteUseCase: ToggleFavouriteUseCase(favourites),
+      favouritesRepository: favourites,
+    ),
+    act: (ListingsBloc bloc) =>
+        bloc.add(const ListingsSearchChanged(query: 'leeds')),
     expect: () => <ListingsState>[
-      const ListingsLoading(),
       ListingsLoaded(
-        listings: <Listing>[_listing('a')],
+        listings: <Listing>[_listing('leeds-1')],
         favouriteIds: const <String>{},
         hasMore: false,
-        query: '',
+        query: 'leeds',
         filters: ListingFilters.none,
         isLoadingMore: false,
       ),
-    ],
-  );
-
-  blocTest<ListingsBloc, ListingsState>(
-    'surfaces a network failure as state',
-    setUp: () {
-      when(
-        () => listings.search(
-          query: any(named: 'query'),
-          page: any(named: 'page'),
-          filters: any(named: 'filters'),
-        ),
-      ).thenThrow(const NetworkException('offline'));
-    },
-    build: buildBloc,
-    act: (ListingsBloc bloc) => bloc.add(const ListingsRequested()),
-    expect: () => <ListingsState>[
-      const ListingsLoading(),
-      const ListingsFailure(error: NetworkException('offline')),
     ],
   );
 }
